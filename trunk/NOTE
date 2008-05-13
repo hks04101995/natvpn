@@ -1,0 +1,7 @@
+1, Enable GMail's IMAP support.
+
+2, http://mail.google.com/support/bin/answer.py?answer=14257 
+
+    Make sure your mail client isn't set to check for new mail too often. 
+    If your mail client checks for new messages more than once every 10 
+    minutes, your client might repeatedly request your username and password.
