@@ -38,6 +38,8 @@ def resetServer(clientMail, clientPasswd, serverMail):
                 continue
             print 'Reset Successful.'
             return True
+        # sleep
+        time.sleep(30)
 
 
 if __name__ == '__main__':
