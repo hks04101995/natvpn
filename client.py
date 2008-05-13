@@ -145,7 +145,7 @@ def natConnect(clientMail, clientPasswd, serverMail, stunServerList,
             if len(cols) == 2 and cols[0] == 'BUSY' \
                and cols[1] == '%u' % sessID:
                 # OpenVPN is already running
-                print 'Server is busying now, send RESET please.'
+                print 'Server is busying now, send RESET first.'
                 stopKeepMap = True
                 return False
             # for 'DONE/SESSID/PORT/IP'
@@ -169,13 +169,14 @@ def natConnect(clientMail, clientPasswd, serverMail, stunServerList,
                 updateClientConf(OpenVPNConfFile,
                                  '%s %d' % (serverIP, destPort), 
                                  '%d' % srcPort)
-                print 'Now VPN Server is listening on (%s:%d), ' + \
-                      'please run OpenVPN client as quick as possible.' \
-                      % (serverIP, destPort)
+                print 'Now VPN Server is listening on (%s:%d).' % (serverIP, destPort)
+                print 'Please launch OpenVPN\'s client as soon as possible.'
                 return True
             else:
                 print 'Failed to connect VPN server.'
                 return False
+        # sleep
+        time.sleep(10)
 
 
 if __name__ == '__main__':
@@ -186,6 +187,9 @@ if __name__ == '__main__':
                       'stun.fwdnet.net']
     OpenVPNConfFile = 'C:\\Program Files\\OpenVPN\\config\\client.ovpn'
 
-    natConnect(clientMail, clientPasswd, serverMail, stunServerList, 
-               OpenVPNConfFile)
+    try:
+        natConnect(clientMail, clientPasswd, serverMail, stunServerList, 
+                   OpenVPNConfFile)
+    except BaseException, e:
+        print 'Catch Exception:', e
     time.sleep(60)

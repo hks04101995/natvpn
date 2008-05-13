@@ -166,7 +166,7 @@ if __name__ == '__main__':
     serverMail = 'openvpn.nat.server@gmail.com'
     serverPasswd = '********'
     clientMail = 'openvpn.nat.user@gmail.com'
-    # 3 minites
+    # 3 minutes
     mailCheckInterval = 180
     stunServerList = ['stun01.sipphone.com', 'stun.ekiga.net', 
                       'stun.fwdnet.net']
