@@ -51,8 +51,9 @@ def tryConnect(destIP, destPort, destPortRange, srcPort, sessID):
             continue
 
     # send sessID to possible Port
-    for i in range(destPortRange):
-        sock.sendto(sessID, (destIP, destPort + i))
+    for i in range(-10, destPortRange):
+        if destPort + i > 0:
+            sock.sendto(sessID, (destIP, destPort + i))
 
     # wait reply
     sock.settimeout(10)
