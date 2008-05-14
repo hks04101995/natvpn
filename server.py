@@ -164,14 +164,20 @@ def natListen(serverMail, serverPasswd, clientMail, mailCheckInterval,
 
 
 if __name__ == '__main__':
+    # 给服务端所用的GMail帐号/密码,如实填写:)
     serverMail = 'openvpn.nat.server@gmail.com'
     serverPasswd = '********'
+    # 给客户端所用的GMail帐号
     clientMail = 'openvpn.nat.user@gmail.com'
-    # 3 minutes
+    # 服务端每次察新邮件的时间间隔,默认3分种,已经比较小了,不要修改
+    # 参考 http://mail.google.com/support/bin/answer.py?answer=14257
     mailCheckInterval = 180
+    # 可用的STUN服务器列表
     stunServerList = ['stun01.sipphone.com', 'stun.ekiga.net', 
                       'stun.fwdnet.net']
+    # 你安装的OpenVPN执行文件路径
     OpenVPNPath = '/usr/local/sbin/openvpn'
+    # 你的OpenVPN配置文件路径
     OpenVPNConfFile = '/usr/local/etc/server.conf'
 
     natListen(serverMail, serverPasswd, clientMail, mailCheckInterval, 
