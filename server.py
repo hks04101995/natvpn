@@ -171,7 +171,7 @@ if __name__ == '__main__':
     stunServerList = ['stun01.sipphone.com', 'stun.ekiga.net', 
                       'stun.fwdnet.net']
     OpenVPNPath = '/usr/local/sbin/openvpn'
-    OpenVPNConfFile = '/home/duxg/Download/code/myopenvpn/myserver/server.conf'
+    OpenVPNConfFile = '/usr/local/etc/server.conf'
 
     natListen(serverMail, serverPasswd, clientMail, mailCheckInterval, 
               stunServerList, OpenVPNPath, OpenVPNConfFile)

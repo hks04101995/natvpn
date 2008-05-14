@@ -5,3 +5,37 @@
     Make sure your mail client isn't set to check for new mail too often. 
     If your mail client checks for new messages more than once every 10 
     minutes, your client might repeatedly request your username and password.
+
+3, PortRange
+
+4, --ping n
+
+    Ping remote over the TCP/UDP control channel if no packets  have  been  sent
+    for  at  least n seconds (specify --ping on both peers to cause ping packets
+    to be sent in both directions since OpenVPN ping packets are not echoed like
+    IP  ping  packets).  When used in one of OpenVPN’s secure modes (where --se-
+    cret, --tls-server, or --tls-client is specified), the ping packet  will  be
+    cryptographically secure.
+
+    This option has two intended uses:
+
+    (1)  Compatibility  with  stateful firewalls.  The periodic ping will ensure
+    that a stateful firewall rule which allows OpenVPN UDP packets to pass  will
+    not time out.
+
+    (2)  To provide a basis for the remote to test the existence of its peer us-
+    ing the --ping-exit option.
+
+5, --ping-exit n
+
+    Causes OpenVPN to exit after n seconds pass without reception of a  ping  or
+    other  packet  from  remote.   This  option can be combined with --inactive,
+    --ping, and --ping-exit to create a two-tiered inactivity disconnect.
+    
+    For example,
+    
+    openvpn [options...] --inactive 3600 --ping 10 --ping-exit 60
+    
+    when used on both peers will cause OpenVPN to exit within 60 seconds if  its
+    peer  disconnects,  but will exit after one hour if no actual tunnel data is
+    exchanged.
