@@ -97,7 +97,7 @@ def natListen(serverMail, serverPasswd, clientMail, mailCheckInterval,
                 # for 'RESET/SESSID'
                 if len(cols) == 2 and cols[0] == 'RESET':
                     # log
-                    print 'RESET received.'
+                    print time.ctime() + ' --> RESET received.'
                     # do
                     os.system('killall openvpn')
                     time.sleep(1)
@@ -117,7 +117,7 @@ def natListen(serverMail, serverPasswd, clientMail, mailCheckInterval,
                 clientIP = cols[2]
                 clientPort = int(cols[3])
                 # log
-                print 'HELLO received from (%s:%d).' % \
+                print time.ctime() + ' --> HELLO received from (%s:%d).' % \
                       (clientIP, clientPort)
 
                 # punch to client
@@ -130,7 +130,7 @@ def natListen(serverMail, serverPasswd, clientMail, mailCheckInterval,
                 myAddr = getMappedAddr(stunServerList, srcPort)
                 if myAddr == '':
                     # stun server error, log
-                    print 'STUN server error.'
+                    print time.ctime() + ' --> STUN server error.'
                     continue
 
                 stopKeepPunch = False
@@ -143,21 +143,22 @@ def natListen(serverMail, serverPasswd, clientMail, mailCheckInterval,
                 stopKeepPunch = True
                 if acceptConnection(srcPort, 180, sessID):
                     # connection is established, log
-                    print 'OpenVPN is running.'
+                    print time.ctime() + ' --> OpenVPN is running.'
                     os.spawnl(os.P_NOWAIT, 
                               OpenVPNPath, 'openvpn', '--config', 
                               OpenVPNConfFile, '--lport', '%d' % srcPort)
                 else:
                     # failed, log
-                    print 'Failed to accept new connection from (%s:%d).' % \
+                    print time.ctime() + \
+                          ' --> Failed to accept new connection from (%s:%d).' % \
                           (clientIP, clientPort)
             # sleep
             time.sleep(mailCheckInterval)
         except KeyboardInterrupt:
-            print 'KeyboardInterrupt'
+            print time.ctime() + ' --> KeyboardInterrupt'
             break
         except BaseException, e:
-            print 'Catch Exception:', e
+            print time.ctime() + ' --> Catch Exception:', e
             stopKeepPunch = True
             continue
 

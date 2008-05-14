@@ -39,3 +39,5 @@
     when used on both peers will cause OpenVPN to exit within 60 seconds if  its
     peer  disconnects,  but will exit after one hour if no actual tunnel data is
     exchanged.
+
+6, Launch server.py by root.
