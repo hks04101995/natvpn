@@ -48,4 +48,4 @@ if __name__ == '__main__':
     serverMail = 'openvpn.nat.server@gmail.com'
 
     resetServer(clientMail, clientPasswd, serverMail)
-    time.sleep(60)
+    time.sleep(3600)

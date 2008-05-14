@@ -181,11 +181,15 @@ def natConnect(clientMail, clientPasswd, serverMail, stunServerList,
 
 
 if __name__ == '__main__':
+    # 给客户端所用的GMail帐号/密码
     clientMail = 'openvpn.nat.user@gmail.com'
     clientPasswd = '********'
+    # 给服务端所用的GMail帐号
     serverMail = 'openvpn.nat.server@gmail.com'
+    # 可用的STUN服务器列表
     stunServerList = ['stun01.sipphone.com', 'stun.ekiga.net', 
                       'stun.fwdnet.net']
+    # 你的OpenVPN客户端配置文件路径
     OpenVPNConfFile = 'C:\\Program Files\\OpenVPN\\config\\client.ovpn'
 
     try:
@@ -193,4 +197,4 @@ if __name__ == '__main__':
                    OpenVPNConfFile)
     except BaseException, e:
         print 'Catch Exception:', e
-    time.sleep(60)
+    time.sleep(3600)
