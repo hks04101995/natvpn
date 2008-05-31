@@ -1,5 +1,6 @@
 # A list of available STUN server.
 
+stun.l.google.com:19302
 stun01.sipphone.com
 stun.ekiga.net
 stun.fwdnet.net

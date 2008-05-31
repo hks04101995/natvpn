@@ -32,9 +32,14 @@ def getMappedAddr(serverList, srcPort):
     # send STUN request and wait reply 
     req = struct.pack('!HHLLLL', BindingRequest, 0, 1, 2, 3, 4)
     resp = ''
-    sock.settimeout(5)
+    sock.settimeout(3)
     for server in serverList:
-        sock.sendto(req, (server, 3478))
+        if server.find(':') == -1:
+            serverIP = server
+            serverPort = 3478
+        else:
+            serverIP, sep, serverPort = server.partition(':')
+        sock.sendto(req, (serverIP, int(serverPort)))
         try:
             # read response
             resp = sock.recvfrom(1024)[0]
