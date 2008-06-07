@@ -112,7 +112,7 @@ class GAppMessager(Messager):
                 break
         # got?
         if challenge == '':
-            raise GAppMessagerGetChallengeError
+            raise GAppMessagerGetChallengeError, 'Failed to get Challenge.'
 
         # try to read messages
         mesgs = []
@@ -136,12 +136,12 @@ class GAppMessager(Messager):
             line = line.strip()
             lineNo += 1
             if lineNo == 1 and line != '200':
-                raise GAppMessagerRecvError
+                raise GAppMessagerRecvError, 'Failed to receive messages.'
             if line.startswith('%s:' % self.oppositeID):
                 # Only one mesg is valid for one (receiver, sender) pair.
                 mesgs.append(line.partition(':')[2])
                 return mesgs
-        raise GAppMessagerRecvError
+        return mesgs
 
     def send(self, mesg):
         params = urllib.urlencode({'user': self.ourID})
@@ -164,7 +164,7 @@ class GAppMessager(Messager):
                 break
         # got?
         if challenge == '':
-            raise GAppMessagerGetChallengeError
+            raise GAppMessagerGetChallengeError, 'Failed to get Challenge.'
 
         # send
         # compute mac
@@ -192,7 +192,7 @@ class GAppMessager(Messager):
             lineNo += 1
             if lineNo == 1 and line == '200':
                 return
-        raise GAppMessagerSendError
+        raise GAppMessagerSendError, 'Failed to send message.'
 
 
 if __name__ == '__main__':
