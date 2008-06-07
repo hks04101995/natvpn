@@ -17,11 +17,38 @@
 #                                                                           #
 #############################################################################
 from address import getMappedAddr
-from messager import GMailMessager
+from messager import *
 import threading
 import socket
 import time
 import os
+
+
+class MessageCheckPolicy:
+    'The policy to check messages.'
+    def __init__(self, policyList, defaultInterval=300):
+        self.policyList = policyList
+        self.defaultInterval = defaultInterval 
+
+    def toMinute(self, hourSepMinute):
+        hour, sep, minute = hourSepMinute.partition(':')
+        return int(hour) * 60 + int(minute)
+
+    def getCheckInterval(self):
+        t = time.localtime()
+        if t[6] < 5:
+            curWDay = 'weekday'
+        else:
+            curWDay = 'weekend'
+        curMinute = self.toMinute('%d:%d' % (t[3], t[4]))
+        # which policy should be used?
+        for p in self.policyList:
+            if curWDay == p[0] and curMinute >= self.toMinute(p[1]) \
+               and curMinute <= self.toMinute(p[2]):
+                return p[3]
+        # default value
+        return self.defaultInterval
+
 
 def punch(destIP, destPort, srcPort):
     sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
@@ -81,16 +108,14 @@ def acceptConnection(listenPort, waitTime, sessID):
     return False
 
 
-def natListen(serverMail, serverPasswd, clientMail, mailCheckInterval, 
-              stunServerList, OpenVPNPath, OpenVPNConfFile, srcPort=1194):
+def natListen(messager, messageCheckPolicy, stunServerList, OpenVPNPath, 
+              OpenVPNConfFile, srcPort=1194):
     global stopKeepPunch
-
-    server = GMailMessager(serverMail, serverPasswd, clientMail)
 
     while True:
         try:
             # wait for client's request
-            ms = server.recv()
+            ms = messager.recv()
             for m in ms:
                 m = m.strip(' \t\r\n')
                 cols = m.split('/')
@@ -104,7 +129,7 @@ def natListen(serverMail, serverPasswd, clientMail, mailCheckInterval,
                     time.sleep(1)
                     os.system('killall -KILL openvpn')
                     # send server's 'DONE'
-                    server.send('DONE/%s' % cols[1])
+                    messager.send('DONE/%s' % cols[1])
                     continue
 
                 # for 'HELLO/SESSID/IP/PORT'
@@ -124,7 +149,7 @@ def natListen(serverMail, serverPasswd, clientMail, mailCheckInterval,
                 # punch to client
                 if punch(clientIP, clientPort, srcPort) == 'AddrInUse':
                     # send server's 'BUSY'
-                    server.send('BUSY/%s' % sessID)
+                    messager.send('BUSY/%s' % sessID)
                     continue
 
                 # get our udp addr/port
@@ -139,7 +164,7 @@ def natListen(serverMail, serverPasswd, clientMail, mailCheckInterval,
                 keepPunch(clientIP, clientPort, srcPort)
 
                 # send server's 'DONE'
-                server.send('DONE/%s/%s' % (sessID, myAddr))
+                messager.send('DONE/%s/%s' % (sessID, myAddr))
                 # wait for client's udp packet
                 stopKeepPunch = True
                 if acceptConnection(srcPort, 180, sessID):
@@ -154,7 +179,7 @@ def natListen(serverMail, serverPasswd, clientMail, mailCheckInterval,
                           ' --> Failed to accept new connection from (%s:%d).' % \
                           (clientIP, clientPort)
             # sleep
-            time.sleep(mailCheckInterval)
+            time.sleep(messageCheckPolicy.getCheckInterval())
         except KeyboardInterrupt:
             print time.ctime() + ' --> KeyboardInterrupt'
             break
@@ -165,21 +190,38 @@ def natListen(serverMail, serverPasswd, clientMail, mailCheckInterval,
 
 
 if __name__ == '__main__':
-    # 给服务端所用的GMail帐号/密码,如实填写:)
-    serverMail = 'openvpn.nat.server@gmail.com'
-    serverPasswd = '********'
-    # 给客户端所用的GMail帐号
-    clientMail = 'openvpn.nat.user@gmail.com'
-    # 服务端每次察新邮件的时间间隔,默认3分种,已经比较小了,不要修改
-    # 参考 http://mail.google.com/support/bin/answer.py?answer=14257
-    mailCheckInterval = 180
+    ## for GMailMessager
+    ## 给服务端所用的GMail帐号/密码,如实填写:)
+    #serverMail = 'openvpn.nat.server@gmail.com'
+    #serverPasswd = '***'
+    ## 给客户端所用的GMail帐号
+    #clientMail = 'openvpn.nat.user@gmail.com'
+    #messager = GMailMessager(serverMail, serverPasswd, clientMail)
+    ## 服务端每次察新邮件的时间间隔,默认3分种,已经比较小了,不要修改
+    ## 参考 http://mail.google.com/support/bin/answer.py?answer=14257
+    #policy = MessageCheckPolicy([('weekday', '00:00', '17:59', 600),
+    #                             ('weekday', '18:00', '22:59', 180),
+    #                             ('weekday', '23:00', '23:59', 600),
+    #                             ('weekend', '00:00', '08:59', 600),
+    #                             ('weekend', '09:00', '22:59', 180),
+    #                             ('weekend', '23:00', '23:59', 600)])
+
+    # for GAppMessager
+    messager = GAppMessager('server', '***', 'client')
+    policy = MessageCheckPolicy([('weekday', '00:00', '17:59', 300),
+                                 ('weekday', '18:00', '22:59', 3),
+                                 ('weekday', '23:00', '23:59', 300),
+                                 ('weekend', '00:00', '08:59', 300),
+                                 ('weekend', '09:00', '22:59', 3),
+                                 ('weekend', '23:00', '23:59', 300)])
+
     # 可用的STUN服务器列表
-    stunServerList = ['stun01.sipphone.com', 'stun.ekiga.net', 
-                      'stun.fwdnet.net']
+    stunServerList = ['stun1.l.google.com:19302', 'stun2.l.google.com:19302', 
+                      'stun3.l.google.com:19302', 'stun4.l.google.com:19302']
+
     # 你安装的OpenVPN执行文件路径
     OpenVPNPath = '/usr/local/sbin/openvpn'
     # 你的OpenVPN配置文件路径
     OpenVPNConfFile = '/usr/local/etc/server.conf'
 
-    natListen(serverMail, serverPasswd, clientMail, mailCheckInterval, 
-              stunServerList, OpenVPNPath, OpenVPNConfFile)
+    natListen(messager, policy, stunServerList, OpenVPNPath, OpenVPNConfFile)
