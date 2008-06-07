@@ -15,18 +15,17 @@
 #   Blog: http://inside2004.cublog.cn                                       #
 #                                                                           #
 #############################################################################
-from messager import GMailMessager
+from messager import *
 import time
 
-def resetServer(clientMail, clientPasswd, serverMail):
-    client = GMailMessager(clientMail, clientPasswd, serverMail)
+def resetServer(messager, mesgCheckInterval):
     sessID = int(time.time())
     # send client's 'RESET'
-    client.send('RESET/%u' % sessID)
+    messager.send('RESET/%u' % sessID)
     print 'RESET sent.'
     # wait for server's reply
     while True:
-        ms = client.recv()
+        ms = messager.recv()
         for m in ms:
             m = m.strip(' \t\r\n')
             cols = m.split('/')
@@ -39,13 +38,21 @@ def resetServer(clientMail, clientPasswd, serverMail):
             print 'Reset Successful.'
             return True
         # sleep
-        time.sleep(30)
+        time.sleep(mesgCheckInterval)
 
 
 if __name__ == '__main__':
-    clientMail = 'openvpn.nat.user@gmail.com'
-    clientPasswd = '********'
-    serverMail = 'openvpn.nat.server@gmail.com'
+    ## for GMailMessager
+    #clientMail = 'openvpn.nat.user@gmail.com'
+    #clientPasswd = '***'
+    #serverMail = 'openvpn.nat.server@gmail.com'
+    #messager = GMailMessager(clientMail, clientPasswd, serverMail)
+    #mesgCheckInterval = 10
 
-    resetServer(clientMail, clientPasswd, serverMail)
+    # for GAppMessager
+    messager = GAppMessager('client', '***', 'server')
+    mesgCheckInterval = 1
+
+    resetServer(messager, mesgCheckInterval)
+
     time.sleep(3600)

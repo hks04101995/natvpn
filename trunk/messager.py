@@ -83,7 +83,7 @@ class GAppMessagerRecvError(Exception):
     pass
 
 class GAppMessager(Messager):
-    'A messager based on the GApp.'
+    'A messager based on the http://dgang.appspot.com/messager.'
 
     def __init__(self, ourID, ourPasswd, oppositeID):
         Messager.__init__(self)

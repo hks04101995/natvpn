@@ -17,11 +17,12 @@
 #                                                                           #
 #############################################################################
 from address import getMappedAddr
-from messager import GMailMessager
+from messager import *
 import threading
 import socket
 import time
 import re
+import os
 
 # global flag
 stopKeepMap = False
@@ -114,11 +115,10 @@ def updateClientConf(confFile, remote, lport):
     fp.close()
 
 
-def natConnect(clientMail, clientPasswd, serverMail, stunServerList, 
-               OpenVPNConfFile, srcPort=12345):
+def natConnect(messager, mesgCheckInterval, stunServerList, OpenVPNConfFile, 
+               srcPort=12345):
     global stopKeepMap
 
-    client = GMailMessager(clientMail, clientPasswd, serverMail)
     sessID = int(time.time())
 
     # get my external addr
@@ -134,12 +134,12 @@ def natConnect(clientMail, clientPasswd, serverMail, stunServerList,
     keepMappedPort(srcPort)
 
     # send client's 'HELLO'
-    client.send('HELLO/%u/%s' % (sessID, myAddr))
+    messager.send('HELLO/%u/%s' % (sessID, myAddr))
     print 'HELLO sent.'
 
     # wait for server's response
     while True:
-        ms = client.recv()
+        ms = messager.recv()
         for m in ms:
             m = m.strip(' \t\r\n')
             cols = m.split('/')
@@ -178,24 +178,35 @@ def natConnect(clientMail, clientPasswd, serverMail, stunServerList,
                 print 'Failed to connect VPN server.'
                 return False
         # sleep
-        time.sleep(10)
+        time.sleep(mesgCheckInterval)
 
 
 if __name__ == '__main__':
-    # 给客户端所用的GMail帐号/密码
-    clientMail = 'openvpn.nat.user@gmail.com'
-    clientPasswd = '********'
-    # 给服务端所用的GMail帐号
-    serverMail = 'openvpn.nat.server@gmail.com'
+    ## for GMailMessager
+    ## 给客户端所用的GMail帐号/密码
+    #clientMail = 'openvpn.nat.user@gmail.com'
+    #clientPasswd = '***'
+    ## 给服务端所用的GMail帐号
+    #serverMail = 'openvpn.nat.server@gmail.com'
+    #messager = GMailMessager(clientMail, clientPasswd, serverMail)
+    #mesgCheckInterval = 10
+
+    # for GAppMessager
+    messager = GAppMessager('client', '***', 'server')
+    mesgCheckInterval = 1
+
     # 可用的STUN服务器列表
-    stunServerList = ['stun01.sipphone.com', 'stun.ekiga.net', 
-                      'stun.fwdnet.net']
+    stunServerList = ['stun1.l.google.com:19302', 'stun2.l.google.com:19302', 
+                      'stun3.l.google.com:19302', 'stun4.l.google.com:19302']
+
     # 你的OpenVPN客户端配置文件路径
-    OpenVPNConfFile = 'C:\\Program Files\\OpenVPN\\config\\client.ovpn'
+    OpenVPNConfFile = '/usr/local/etc/openvpn/client.ovpn'
 
     try:
-        natConnect(clientMail, clientPasswd, serverMail, stunServerList, 
-                   OpenVPNConfFile)
+        if natConnect(messager, mesgCheckInterval, stunServerList, 
+                      OpenVPNConfFile) == True:
+            os.spawnl(os.P_WAIT, '/usr/local/sbin/openvpn', 'openvpn', 
+                      '--config', OpenVPNConfFile)
     except BaseException, e:
         print 'Catch Exception:', e
     time.sleep(3600)
