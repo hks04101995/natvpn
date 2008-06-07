@@ -1,3 +1,4 @@
+#! /usr/bin/env python
 #############################################################################
 #                                                                           #
 #   File: messager.py                                                       #
@@ -15,6 +16,9 @@
 #############################################################################
 import imaplib
 import smtplib
+import urllib
+import md5
+import base64
 
 class Messager:
     'A messager.'
@@ -66,3 +70,133 @@ class GMailMessager(Messager):
         session.sendmail(self.ourMail, self.fromMail, 
                          'To:null\r\nFrom:null\r\nSubject:null\r\n\r\n' + mesg)
         session.quit()
+
+
+# for GAppMessager
+class GAppMessagerGetChallengeError(Exception):
+    pass
+
+class GAppMessagerSendError(Exception):
+    pass
+
+class GAppMessagerRecvError(Exception):
+    pass
+
+class GAppMessager(Messager):
+    'A messager based on the GApp.'
+
+    def __init__(self, ourID, ourPasswd, oppositeID):
+        Messager.__init__(self)
+        self.ourID = ourID
+        self.ourPasswd = ourPasswd
+        self.oppositeID = oppositeID
+
+    def recv(self):
+        params = urllib.urlencode({'user': self.ourID})
+        page = urllib.urlopen('http://dgang.appspot.com/messager/auth.py?%s' \
+                              % params)
+        # get challenge
+        challenge = ''
+        lineNo = 0
+        while True:
+            line = page.readline() 
+            if line == '':
+                break
+            # parse line
+            line = line.strip()
+            lineNo += 1
+            if lineNo == 1 and line != '200':
+                break
+            elif lineNo == 2:
+                challenge = line
+                break
+        # got?
+        if challenge == '':
+            raise GAppMessagerGetChallengeError
+
+        # try to read messages
+        mesgs = []
+        # compute mac
+        m = md5.new()
+        m.update(self.ourID)
+        m.update(self.ourPasswd)
+        m.update(challenge)
+        mac = base64.b16encode(m.digest())
+        params = urllib.urlencode({'receiver': self.ourID, 
+                                   'mac': mac,})
+        page = urllib.urlopen('http://dgang.appspot.com/messager/recv.py?%s' \
+                              % params)
+        # parse response
+        lineNo = 0
+        while True:
+            line = page.readline() 
+            if line == '':
+                break
+            # parse line
+            line = line.strip()
+            lineNo += 1
+            if lineNo == 1 and line != '200':
+                raise GAppMessagerRecvError
+            if line.startswith('%s:' % self.oppositeID):
+                # Only one mesg is valid for one (receiver, sender) pair.
+                mesgs.append(line.partition(':')[2])
+                return mesgs
+        raise GAppMessagerRecvError
+
+    def send(self, mesg):
+        params = urllib.urlencode({'user': self.ourID})
+        page = urllib.urlopen('http://dgang.appspot.com/messager/auth.py?%s' \
+                              % params)
+        # get challenge
+        challenge = ''
+        lineNo = 0
+        while True:
+            line = page.readline() 
+            if line == '':
+                break
+            # parse line
+            line = line.strip()
+            lineNo += 1
+            if lineNo == 1 and line != '200':
+                break
+            elif lineNo == 2:
+                challenge = line
+                break
+        # got?
+        if challenge == '':
+            raise GAppMessagerGetChallengeError
+
+        # send
+        # compute mac
+        m = md5.new()
+        m.update(self.ourID)
+        m.update(self.ourPasswd)
+        m.update(challenge)
+        m.update(self.oppositeID)
+        m.update(mesg)
+        mac = base64.b16encode(m.digest())
+        params = urllib.urlencode({'sender': self.ourID, 
+                                   'receiver': self.oppositeID, 
+                                   'content': mesg,
+                                   'mac': mac,})
+        page = urllib.urlopen('http://dgang.appspot.com/messager/sendto.py?%s' \
+                              % params)
+        # parse response
+        lineNo = 0
+        while True:
+            line = page.readline() 
+            if line == '':
+                break
+            # parse line
+            line = line.strip()
+            lineNo += 1
+            if lineNo == 1 and line == '200':
+                return
+        raise GAppMessagerSendError
+
+
+if __name__ == '__main__':
+    messager = GAppMessager('client', '***', 'server')
+    messager.send('hello')
+    messager = GAppMessager('server', '***', 'client')
+    print messager.recv()
